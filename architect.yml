@@ -1,0 +1,36 @@
+name: yew-app
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        RUST_ENV: production
+    interfaces:
+      main: &port 1234
+    environment:
+      TRUNK_SERVE_PORT: *port
+      TRUNK_SERVE_ADDRESS: 0.0.0.0
+    readiness_probe:
+      command: curl --fail localhost:1234
+       # Rust gotta compile, yo.
+      initial_delay: 300s
+    liveness_probe:
+      command: curl --fail localhost:1234
+      interval: 30s
+      failure_threshold: 3
+    debug:
+      command: trunk serve
+      build:
+        args:
+          RUST_ENV: local
+      volumes:
+        src:
+          mount_path: /app/src
+          host_path: ./src
+
+interfaces:
+  app:
+    url: ${{ services.app.interfaces.main.url }}
+    ingress:
+      subdomain: tj_smellz
